@@ -2,7 +2,19 @@
 <meta charset="utf-8">
 <style>
 .link {
-    stroke: #ccc;
+    stroke: #ffff00;
+    stroke-dasharray: 5, 10, 5;
+    stroke-width: 2;
+}
+.linkWeak {
+    stroke: #800000;
+    stroke-width: 1;
+}
+.linkStrong {
+    stroke: #009933;
+    stroke-width: 4;
+    stroke-dasharray: 2,2,2;
+
 }
 .node text {
     pointer-events: none;
@@ -10,7 +22,7 @@
 }
 
 </style>
-<svg width="960" height="600"></svg>
+<svg width="2000" height="1800"></svg>
 <script src="//d3js.org/d3.v4.min.js"></script>
 <script>
 
@@ -42,13 +54,22 @@ d3.json("output.json", function(error, graph) {
   link = link
     .data(graph.links)
     .enter().append("line")
-      .attr("class", "link");
+      .attr("class", function(d) { 
+        if (d.win > 0.7) {return "linkStrong";}
+        else if (d.win > 0.5){
+          return "link";}
+        else{
+          return "linkWeak"
+        }
+        ; })
 
   node = node
     .data(graph.nodes)
     .enter().append("image")
     .attr("class", "node")
-    .attr("xlink:href", "./Jarvan_IV.jpg")
+    .attr("xlink:href", function(d) { return "https://ddragon.leagueoflegends.com/cdn/8.1.1/img/champion/" + d.id + ".png"; })
+
+
     .attr("x", -16)
     .attr("y", -16)
     .attr("width", 32)
