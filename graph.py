@@ -24,7 +24,7 @@ line = []
 for x in reader:
 	line.append(x)
 last = 0
-with click.progressbar(line, label='Progresso') as bar:
+with click.progressbar(line, label='Calculando dados brutos') as bar:
 	for i,x in enumerate(bar):
 		found = False
 		for y in line[last:]:
@@ -41,14 +41,29 @@ with click.progressbar(line, label='Progresso') as bar:
 				break;
 
 list_final = []
-for _,x in matrix.items():
-	for _, y in x['list'].items():
-		if(y['count'] > 0 ):
-			list_final.append({"source" : x['name'], "target" : y['name'], "win" : y['win']/y['count'],"value" : y['count']})
+with click.progressbar(matrix.items(), label='Fazendo filtros, e ligações') as bar:
+	for _,x in bar:
+		for _, y in x['list'].items():
+			if(y['count'] > 0 ):
+				list_final.append({"source" : x['name'], "target" : y['name'], "win" : y['win']/y['count'],"value" : y['count']})
+
 
 l = sorted(list_final, key=getKey, reverse=True)
 list_com_no_minimo = [num for num in l if (num['win'] > 0.6) and (num['value'] > 50)]
+
+not_remove = []
+for x in list_com_no_minimo:
+	not_remove.append(x['source'])
+
+filtered_nodes = []
+with click.progressbar(nodes, label='Fazendo filtros, e removendo') as bar:
+	for x in bar:
+		if(not_remove.count(x['id']) > 0):
+			filtered_nodes.append(x)
+
+
+
 output = open('./static/output.json', 'w')
-j = {"nodes" : nodes, "links" : list_com_no_minimo}
+j = {"nodes" : filtered_nodes, "links" : list_com_no_minimo}
 json.dump(j, output, ensure_ascii=False)
 print("Algoritmo rodou em {}s".format(round((time.clock() - tempototal),2)))
