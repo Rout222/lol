@@ -23,7 +23,7 @@
 
 </style>
 <svg width="2000" height="1800"></svg>
-<script src="//d3js.org/d3.v4.min.js"></script>
+<script src="http://d3js.org/d3.v4.min.js"></script>
 <script>
 
 var svg = d3.select("svg"),
@@ -40,7 +40,7 @@ var simulation = d3.forceSimulation()
 var link = svg.selectAll(".link"),
     node = svg.selectAll(".node");
 
-d3.json("output.json", function(error, graph) {
+d3.json("{{ url_for('static', filename='output.json') }}", function(error, graph) {
   if (error) throw error;
 
   simulation.nodes(graph.nodes);
@@ -67,7 +67,7 @@ d3.json("output.json", function(error, graph) {
     .data(graph.nodes)
     .enter().append("image")
     .attr("class", "node")
-    .attr("xlink:href", function(d) { return "https://ddragon.leagueoflegends.com/cdn/8.1.1/img/champion/" + d.id + ".png"; })
+    .attr("xlink:href", function(d) { return "http://res.cloudinary.com/dtw89d7fd/image/upload/c_scale,r_30,w_30/v1516037660/"+d.url+".png"; })
 
 
     .attr("x", -16)
