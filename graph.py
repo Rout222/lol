@@ -68,7 +68,7 @@ output = open('./static/output.json', 'w')
 paj_output = open('./static/paj.paj', 'w')
 paj_text = "*Vertices {}".format(len(filtered_nodes)+1)
 for x in paj_nodes:
-	paj_text += "\n\t{}\t{}".format(x[0],x[1])
+	paj_text += "\n\t{}\t\"{}\"".format(x[0],x[1])
 paj_text += "\n*arcs"
 for x in paj_arcs:
 	paj_text += "\n\t{}\t{}\t{}".format(x[0],x[1],x[2])
