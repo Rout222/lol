@@ -5,6 +5,7 @@ import threading
 import csv
 import copy
 from glob import glob
+import MySQLdb
 import champs
 tempototal = time.clock()
 def getKey(item):
@@ -41,19 +42,22 @@ with click.progressbar(line, label='Calculando dados brutos') as bar:
 				break;
 
 list_final = []
+db=MySQLdb.connect(passwd="",db="leagueoflegends", user="root")
+c=db.cursor()
+c.execute("TRUNCATE arcs;")
 with click.progressbar(matrix.items(), label='Fazendo filtros, e ligações') as bar:
 	for _,x in bar:
 		for _, y in x['list'].items():
 			if(y['count'] > 0 ):
 				list_final.append({"source_id" : x['id'], "target_id" : y['id'] ,"source" : x['name'], "target" : y['name'], "win" : y['win']/y['count'],"value" : y['count']})
-
-
-l = sorted(list_final, key=getKey, reverse=True)
-list_com_no_minimo = [num for num in l if (num['win'] > 0.6) and (num['value'] > 50)]
-
+				c.execute("INSERT INTO `arcs`(`source_id`, `target_id`, `value`, `win`) VALUES (\"{}\",\"{}\",\"{}\",{})".format(x['id'],y['id'],y['count'],(y['win']/(y['count']+1))))
+db.commit()
+db.close()
+list_final = sorted(list_final, key=getKey, reverse=True)
+list_final = [num for num in list_final if (num['win'] > 0.6) and (num['value'] > 50)]
 not_remove = []
 paj_arcs = []
-for x in list_com_no_minimo:
+for x in list_final:
 	not_remove.append(x['source'])
 	paj_arcs.append([x['source_id'], x['target_id'], x['win']])
 
@@ -64,7 +68,6 @@ with click.progressbar(nodes, label='Fazendo filtros, e removendo') as bar:
 		if(not_remove.count(x['id']) > 0):
 			filtered_nodes.append(x)
 			paj_nodes.append([x['uid'], x['id']])
-output = open('./static/output.json', 'w')
 paj_output = open('./static/paj.paj', 'w')
 paj_text = "*Vertices {}".format(len(filtered_nodes)+1)
 for x in paj_nodes:
@@ -73,7 +76,10 @@ paj_text += "\n*arcs"
 for x in paj_arcs:
 	paj_text += "\n\t{}\t{}\t{}".format(x[0],x[1],x[2])
 
-paj_output.write(paj_text)
-j = {"nodes" : filtered_nodes, "links" : list_com_no_minimo}
+output = open('./static/output.json', 'w')
+j = {"nodes" : filtered_nodes, "links" : list_final}
 json.dump(j, output, ensure_ascii=False)
+
+
+paj_output.write(paj_text)
 print("Algoritmo rodou em {}s".format(round((time.clock() - tempototal),2)))

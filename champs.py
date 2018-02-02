@@ -1,3 +1,6 @@
+import MySQLdb
+import click
+
 champs = {
 	62: [62, 'MonkeyKing', 'MonkeyKing_vxuea2'],
 	24: [24, 'Jax', 'Jax_uvpgkq'],
@@ -137,5 +140,23 @@ champs = {
 	103: [103, 'Ahri', 'Ahri_j3avlb'],
 	133: [133, 'Quinn', 'Quinn_pf6oa5'],
 	7: [7, 'Leblanc', 'Leblanc_h0ysgr'],
-	81: [81, 'Ezreal', 'Ezreal_ejzzsi']
-}
+	81: [81, 'Ezreal', 'Ezreal_ejzzsi']}
+
+def execute_query(string):
+	db=MySQLdb.connect(passwd="",db="leagueoflegends", user="root")
+	c=db.cursor()
+	c.execute(string)
+	db.commit()
+	db.close()
+
+def clear_champions():
+	execute_query("TRUNCATE champs")
+
+def insert_all_champions():
+	with click.progressbar(champs.items(), label='Inserindo Novos Dados na tabela') as bar:
+		for uid,x in bar:
+			execute_query("INSERT INTO `champs`(`name`, `url`, `uid`) VALUES (\"{}\",\"{}\",\"{}\")".format(str(x[1]),str(x[2]),str(x[0])))
+
+def reset_champions():
+	clear_champions()
+	insert_all_champions();
