@@ -5,10 +5,11 @@ import sys
 import re
 import champs
 import igraph
-v = []
+
+equivalencia = {}
+
 # print(len(request.form), file=sys.stderr)
 app = Flask(__name__)
-v=[2,3,4,8,9,14,17,22,24,31,32,39,41,46,51,52,54,56,58,61,63,71,72,80,89,92,96,101,106,109,111,114,117,120,121,123,125,126,133,136,139,1,12,16,20,30,34,37,53,75,76,81,91,105,107,113]
 @app.route("/", methods = ['GET', 'POST'])
 def hello():
 	json_file = get_json(request.form) if len(request.form) > 0 else get_json([])
@@ -18,11 +19,13 @@ def hello():
 
 def init_igraph():
 	g = igraph.read("pajekfile.net",format="pajek")
-	cc = g.transitivity_local_undirected(vertices=v)
-	grau = g.degree(v, mode="in", loops=True)
-	excentricidade = g.eccentricity(vertices=v, mode="in")
+	cc = g.transitivity_undirected()
+	ver = list(range(1,len(equivalencia)+1))
+	excentricidade = g.eccentricity(vertices=ver, mode="OUT")
+	grau = g.degree(ver, mode="OUT", loops=True)
 
-
+def pr(valor):
+	print(valor, file=sys.stderr)
 def mk_int(s):
     s = s.strip()
     return int(s) if s else 0
@@ -68,7 +71,6 @@ def get_json(args):
 def make_json(data):
 	links = []
 	list_used = []
-	global v
 	paj_links = []
 	paj_nodes = []
 	for x in data:
@@ -76,7 +78,6 @@ def make_json(data):
 		paj_links.append({"sid" : x[4], "tid" : x[5], "value" :x[0]})
 		if list_used.count(x[2]) == 0:
 			list_used.append(x[2])
-			v.append(x[4])
 			paj_nodes.append({"sid" : x[4], "sname" : x[2]})
 
 	make_paj(paj_nodes,paj_links)
@@ -87,12 +88,15 @@ def make_json(data):
 
 def make_paj(nodes, links):
 	output = open('pajekfile.net', 'w')
-	text = "*Vertices {}".format(140)
-	for x in nodes:
-		text += "\n\t{} \"{}\"".format(x["sid"],x["sname"])
+	text = "*Vertices {}".format(len(nodes)+1)
+	global equivalencia
+	equivalencia = {}
+	for i,x in enumerate(nodes):
+		text += "\n\t{} \"{}\"".format(i+1,x["sname"])
+		equivalencia[x['sid']] = i+1
 	text += "\n*arcs"
 	for x in links:
-		text += "\n\t{} {} {}".format(x["sid"],x["tid"],x["value"])
+		text += "\n\t{} {} {}".format(equivalencia[x["sid"]],equivalencia[x["tid"]],x["value"])
 	output.write(text)
 	output.close()
 

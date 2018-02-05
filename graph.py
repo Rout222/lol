@@ -7,6 +7,7 @@ import copy
 from glob import glob
 import MySQLdb
 import champs
+import os
 tempototal = time.clock()
 def getKey(item):
 	return item['value']
@@ -19,6 +20,17 @@ matrix = copy.deepcopy(line)
 for x,y in matrix.items():
 	del matrix[x]['count']
 	matrix[x]['list'] = copy.deepcopy(line)
+db=MySQLdb.connect(passwd="",db="leagueoflegends", user="root")
+c=db.cursor()
+os.remove("querydump.csv")
+c.execute("""
+SELECT id, match_id, kills, deaths, assists, win, champ_id, lane, player_id, platform, type from players 
+where type = 420
+INTO OUTFILE 'E:/escola/lol/querydump.csv' 
+FIELDS TERMINATED BY ',' 
+OPTIONALLY ENCLOSED BY '"' 
+LINES TERMINATED BY '\n';
+	""")
 file = open('querydump.csv', newline='', encoding='utf-8')
 reader = csv.reader(file)
 line = []
@@ -42,8 +54,6 @@ with click.progressbar(line, label='Calculando dados brutos') as bar:
 				break;
 
 list_final = []
-db=MySQLdb.connect(passwd="",db="leagueoflegends", user="root")
-c=db.cursor()
 c.execute("TRUNCATE arcs;")
 with click.progressbar(matrix.items(), label='Fazendo filtros, e ligações') as bar:
 	for _,x in bar:
@@ -56,30 +66,19 @@ db.close()
 list_final = sorted(list_final, key=getKey, reverse=True)
 list_final = [num for num in list_final if (num['win'] > 0.6) and (num['value'] > 50)]
 not_remove = []
-paj_arcs = []
+
 for x in list_final:
 	not_remove.append(x['source'])
-	paj_arcs.append([x['source_id'], x['target_id'], x['win']])
 
 filtered_nodes = []
-paj_nodes = []
 with click.progressbar(nodes, label='Fazendo filtros, e removendo') as bar:
 	for x in bar:
 		if(not_remove.count(x['id']) > 0):
 			filtered_nodes.append(x)
-			paj_nodes.append([x['uid'], x['id']])
-paj_output = open('./static/paj.paj', 'w')
-paj_text = "*Vertices {}".format(len(filtered_nodes)+1)
-for x in paj_nodes:
-	paj_text += "\n\t{}\t\"{}\"".format(x[0],x[1])
-paj_text += "\n*arcs"
-for x in paj_arcs:
-	paj_text += "\n\t{}\t{}\t{}".format(x[0],x[1],x[2])
+
 
 output = open('./static/output.json', 'w')
 j = {"nodes" : filtered_nodes, "links" : list_final}
 json.dump(j, output, ensure_ascii=False)
 
-
-paj_output.write(paj_text)
 print("Algoritmo rodou em {}s".format(round((time.clock() - tempototal),2)))

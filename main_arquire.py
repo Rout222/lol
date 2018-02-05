@@ -111,7 +111,7 @@ def change_api_key(sleep, sequence):
 		api_usada += 1
 		api.release()
 	elif(sequence):
-		print("Limite atingindo, dormindo {}".format(sleep))
+		print("Limite atingindo, dormindo {}s".format(sleep))
 		time.sleep(sleep)
 
 start = time.clock()
@@ -128,4 +128,4 @@ for x in threadG:
 
 while True:
 	if((time.clock() - start) % 10 == 0):
-		print("Rodando à {}s ,Média de inserções é de {}/s e Média de tentativas {}/s".format(round(time.clock() - start),round(line_inserteds/(time.clock() - start),2),round(tentativas/(time.clock() - start),2)))
+		print("Rodando à {}s, Média de inserções é de {}/s e Média de tentativas {}/s".format(round(time.clock() - start),round(line_inserteds/(time.clock() - start),2),round(tentativas/(time.clock() - start),2)))
