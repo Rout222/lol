@@ -19,10 +19,15 @@ def hello():
 
 def init_igraph():
 	g = igraph.read("pajekfile.net",format="pajek")
-	cc = g.transitivity_undirected()
 	ver = list(range(1,len(equivalencia)+1))
+	
+
+	cc = g.transitivity_undirected()
 	excentricidade = g.eccentricity(vertices=ver, mode="OUT")
 	grau = g.degree(ver, mode="OUT", loops=True)
+	pr(cc)
+	pr(excentricidade)
+	pr(grau)
 
 def pr(valor):
 	print(valor, file=sys.stderr)
