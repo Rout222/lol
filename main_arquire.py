@@ -18,12 +18,16 @@ class getter(threading.Thread):
 		threading.Thread.__init__(self)
 		self.id = id
 		self.sequence = False
+		self.count = 0
 	def run(self):
 		global tentativas
 		while True:
 			url = 'https://br1.api.riotgames.com/lol/match/v3/matches/{}?api_key={}'.format(get_next_match_id(self.id),get_api_key())
 			request = requests.get(url)
 			tentativas += 1
+			self.count += 1
+			if(self.count%30 == 0):
+				change_api_key(5, self.sequence)
 			if request.status_code == 429:
 				change_api_key(int(request.headers['Retry-After']), self.sequence)
 				self.sequence = True

@@ -8,6 +8,8 @@ from glob import glob
 import MySQLdb
 import champs
 import os
+import sys
+
 tempototal = time.clock()
 def getKey(item):
 	return item['value']
@@ -22,15 +24,19 @@ for x,y in matrix.items():
 	matrix[x]['list'] = copy.deepcopy(line)
 db=MySQLdb.connect(passwd="",db="leagueoflegends", user="root")
 c=db.cursor()
-os.remove("querydump.csv")
+filename = os.getcwd().replace("\\","/")+"/querydump.csv"
 c.execute("""
-SELECT id, match_id, kills, deaths, assists, win, champ_id, lane, player_id, platform, type from players 
-where type = 420
-INTO OUTFILE 'E:/escola/lol/querydump.csv' 
-FIELDS TERMINATED BY ',' 
-OPTIONALLY ENCLOSED BY '"' 
-LINES TERMINATED BY '\n';
-	""")
+	SELECT 
+		id, match_id, kills, deaths, assists, win, champ_id, lane, player_id, platform, type 
+	from 
+		players 
+	where 
+		type in (420,440) 
+	INTO OUTFILE '{}' 
+	FIELDS TERMINATED BY ',' 
+	OPTIONALLY ENCLOSED BY '\"' 
+	LINES TERMINATED BY '\n';
+	""".format(filename))
 file = open('querydump.csv', newline='', encoding='utf-8')
 reader = csv.reader(file)
 line = []
@@ -82,3 +88,6 @@ j = {"nodes" : filtered_nodes, "links" : list_final}
 json.dump(j, output, ensure_ascii=False)
 
 print("Algoritmo rodou em {}s".format(round((time.clock() - tempototal),2)))
+
+file.close()
+os.remove("querydump.csv")
