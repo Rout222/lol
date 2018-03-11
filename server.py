@@ -8,20 +8,17 @@ import igraph
 
 equivalencia = {}
 
-# print(len(request.form), file=sys.stderr)
 app = Flask(__name__)
 @app.route("/", methods = ['GET', 'POST'])
 def hello():
 	json_file = get_json(request.form) if len(request.form) > 0 else get_json([])
-	if(len(json_file) > 1):
-		init_igraph()
+	# if(len(json_file) > 1):
+	# 	init_igraph()
 	return render_template('index.html', value=json_file, champs=champs.champs.items())
 
 def init_igraph():
 	g = igraph.read("pajekfile.net",format="pajek")
 	ver = list(range(1,len(equivalencia)+1))
-	
-
 	cc = g.transitivity_undirected()
 	excentricidade = g.eccentricity(vertices=ver, mode="OUT")
 	grau = g.degree(ver, mode="OUT", loops=True)
@@ -40,13 +37,20 @@ def mk_float(s):
 def get_json(args):
 	default_min = 50
 	default_win = 0.6
+	
+	cmax = 5000
+	cmin = 50
+	cwin = 0.6
 
-	query = "SELECT `value`,`win`, b.name as sname, c.name as tname, b.id as sid, c.id as tid FROM `arcs` a JOIN champs b ON (a.source_id = b.uid) JOIN champs c ON (a.target_id = c.uid)"
+	query = "SELECT `value`,`win`, b.name as sname, c.name as tname, b.id as sid, c.id as tid, jogoucontra, ganhoucontra FROM `arcs` a JOIN champs b ON (a.source_id = b.uid) JOIN champs c ON (a.target_id = c.uid)"
 	if(len(args) > 0):
 		minimo = mk_int(args['min'])
 		query += " WHERE value >= {}".format(minimo)
 		maximo = mk_int(args['max'])
 		vitorias = mk_float(args['win'])
+		cwin = mk_float(args['cwin'])
+		cmin = mk_float(args['cmin'])
+		cmax = mk_float(args['cmax'])
 		if(maximo > 0):
 			query += " AND value <= {}".format(maximo)
 
@@ -65,31 +69,51 @@ def get_json(args):
 		if (vitorias >= 0 and vitorias <= 1):
 			query += " AND win > {}".format(vitorias) 
 	else:
-		query += " WHERE win >= {} AND value >= {}".format(default_win, default_min)
-
+		query += " WHERE (win >= {} AND value >= {})".format(default_win, default_min)
 	db=MySQLdb.connect(passwd="",db="leagueoflegends", user="root")
 	c=db.cursor()
 	c.execute(query)
 	db.close()
-	return make_json(c.fetchall())
+	cmax = 5000 if cmax < cmin else cmax
+	return make_json(c.fetchall(), cmin, cmax, cwin)
 
-def make_json(data):
+def make_enemies(target, min, max, win):
+	query = "SELECT b.name as sname, c.name as tname, b.id as sid, c.id as tid, jogoucontra, ganhoucontra FROM `arcs` a JOIN champs b ON (a.source_id = b.uid) JOIN champs c ON (a.target_id = c.uid)"
+	query += "WHERE c.name = \"{}\" AND ganhoucontra/jogoucontra >= {} ".format(target, win)
+	query += "AND jogoucontra BETWEEN {} AND {} ".format(min, max) if (max > 0) else ""
+	db=MySQLdb.connect(passwd="",db="leagueoflegends", user="root")
+	c=db.cursor()
+	c.execute(query)
+	db.close()
+	r = []
+	for x in c.fetchall():
+		r.append({"source" : x[0], "target" : target, "jogoucontra" : x[4], "ganhoucontra" :x[5]})
+	return r
+def make_json(data, cmin, cmax, cwin):
 	links = []
+	versus_links = []
 	list_used = []
 	paj_links = []
 	paj_nodes = []
 	for x in data:
 		links.append({"source" : x[2], "target" : x[3], "win" : x[1], "value" :x[0]})
+		for y in make_enemies(x[3], cmin, cmax, cwin):
+			versus_links.append(y)
 		paj_links.append({"sid" : x[4], "tid" : x[5], "value" :x[0]})
 		if list_used.count(x[2]) == 0:
 			list_used.append(x[2])
 			paj_nodes.append({"sid" : x[4], "sname" : x[2]})
+	
+	# colocando na lista de usados os counters
+	for y in versus_links:
+		if list_used.count(y['source']) == 0:
+			list_used.append(y['source'])
 
 	make_paj(paj_nodes,paj_links)
 	nodes = get_all_champs_in_node(links, list_used)
-	
-	output = Markup({"nodes" : nodes, "links" : links})
+	output = Markup({"nodes" : nodes, "links" : links, "counters" : versus_links})
 	return output
+
 
 def make_paj(nodes, links):
 	output = open('pajekfile.net', 'w')

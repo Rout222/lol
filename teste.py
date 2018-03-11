@@ -1,6 +1,3 @@
-import sys, os
-
-print('sys.argv[0] =', sys.argv[0])             
-pathname = os.path.dirname(sys.argv[0])        
-print('path =', pathname)
-print('full path =', os.path.abspath(pathname)) 
+import click
+with click.progressbar([1,2,3,4,5,6].items(), label='Calculando dados brutos') as bar:
+	print(bar)
