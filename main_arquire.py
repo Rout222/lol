@@ -1,8 +1,9 @@
 import json
 import requests
-import MySQLdb
+import mysql.connector
 import time
 import threading
+import sys
 from glob import glob
 start = 0
 tentativas = 0
@@ -19,6 +20,13 @@ class getter(threading.Thread):
 		self.id = id
 		self.sequence = False
 		self.count = 0
+
+	def	cleanup_stop_thread(self):
+		match.acquire()
+		api.acquire()
+		api.release()
+		match.release()
+		
 	def run(self):
 		global tentativas
 		while True:
@@ -88,12 +96,15 @@ def get_next_match_id(line):
 	return match_id
 
 def save_data(data):
-	db=MySQLdb.connect(passwd="",db="leagueoflegends", user="root")
+	db =  mysql.connector.connect(user='root', password='',
+                                 host='127.0.0.1',
+                                 database='leagueoflegends')
 	c=db.cursor()
 	global line_inserteds
 	line_inserteds += 1
 	c.executemany("""INSERT INTO `players`(`match_id`, `kills`, `deaths`, `assists`, `win`, `champ_id`, `lane`, `player_id`, `platform`, `type`) VALUES  (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",data)
 	db.commit()
+	c.close()
 	db.close()
 
 def get_api_key():
@@ -123,13 +134,8 @@ last_change = time.clock() - 100
 threadG = []
 for x in range(0,6):
 	threadG.append(getter(x))
-
 for x in threadG:
 	x.start()
-
-# for x in threadG:
-# 	x.join()
-
 while True:
 	if((time.clock() - start) % 10 == 0):
 		print("Rodando à {}s, Média de inserções é de {}/s e Média de tentativas {}/s".format(round(time.clock() - start),round(line_inserteds/(time.clock() - start),2),round(tentativas/(time.clock() - start),2)))

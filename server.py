@@ -4,7 +4,7 @@ import json
 import sys
 import re
 import champs
-import igraph
+#import igraph
 
 equivalencia = {}
 
@@ -39,7 +39,7 @@ def get_json(args):
 	default_win = 0.6
 	
 	cmax = 5000
-	cmin = 50
+	cmin = 150
 	cwin = 0.6
 
 	query = "SELECT `value`,`win`, b.name as sname, c.name as tname, b.id as sid, c.id as tid, jogoucontra, ganhoucontra FROM `arcs` a JOIN champs b ON (a.source_id = b.uid) JOIN champs c ON (a.target_id = c.uid)"
