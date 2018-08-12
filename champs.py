@@ -1,8 +1,9 @@
-import MySQLdb
+import mysql.connector
 import click
 
 champs = {
 	62: [62, 'MonkeyKing', 'MonkeyKing_vxuea2'],
+	555: [555, 'Pyke', 'Pyke'],
 	24: [24, 'Jax', 'Jax_uvpgkq'],
 	9: [9, 'Fiddlesticks', 'Fiddlesticks_jb8isc'],
 	35: [35, 'Shaco', 'Shaco_cmw8bi'],
@@ -49,6 +50,7 @@ champs = {
 	203: [203, 'Kindred', 'Kindred_iwfh9p'],
 	69: [69, 'Cassiopeia', 'Cassiopeia_m03xgf'],
 	57: [57, 'Maokai', 'Maokai_fgqz2s'],
+	145: [145, 'Kai\'sa', 'Kaisa'],
 	516: [516, 'Ornn', 'Ornn_jfxv6t'],
 	412: [412, 'Thresh', 'Thresh_eowzxf'],
 	10: [10, 'Kayle', 'Kayle_ite8x6'],
