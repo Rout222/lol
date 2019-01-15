@@ -1,10 +1,9 @@
 from flask import Flask, render_template, request,jsonify, Markup
-import MySQLdb
+import mysql.connector
 import json
 import sys
 import re
 import champs
-#import igraph
 
 equivalencia = {}
 
@@ -70,7 +69,7 @@ def get_json(args):
 			query += " AND win > {}".format(vitorias) 
 	else:
 		query += " WHERE (win >= {} AND value >= {})".format(default_win, default_min)
-	db=MySQLdb.connect(passwd="",db="leagueoflegends", user="root")
+	db=mysql.connector.connect(passwd="",db="leagueoflegends", user="root")
 	c=db.cursor()
 	c.execute(query)
 	db.close()
@@ -81,7 +80,7 @@ def make_enemies(target, min, max, win):
 	query = "SELECT b.name as sname, c.name as tname, b.id as sid, c.id as tid, jogoucontra, ganhoucontra FROM `arcs` a JOIN champs b ON (a.source_id = b.uid) JOIN champs c ON (a.target_id = c.uid)"
 	query += "WHERE c.name = \"{}\" AND ganhoucontra/jogoucontra >= {} ".format(target, win)
 	query += "AND jogoucontra BETWEEN {} AND {} ".format(min, max) if (max > 0) else ""
-	db=MySQLdb.connect(passwd="",db="leagueoflegends", user="root")
+	db=mysql.connector.connect(passwd="",db="leagueoflegends", user="root")
 	c=db.cursor()
 	c.execute(query)
 	db.close()
@@ -130,7 +129,7 @@ def make_paj(nodes, links):
 	output.close()
 
 def get_all_champs_in_node(links, list_used):
-	db=MySQLdb.connect(passwd="",db="leagueoflegends", user="root")
+	db=mysql.connector.connect(passwd="",db="leagueoflegends", user="root")
 	c=db.cursor()
 	c.execute("SELECT uid, name, url FROM CHAMPS")
 	data = c.fetchall()
